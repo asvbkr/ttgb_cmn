@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import functools
 import hashlib
-import json
+import inspect
 import logging
 import math
 import os
@@ -11,9 +11,6 @@ from datetime import datetime
 from logging.handlers import RotatingFileHandler
 
 from typing import TypeVar, Callable
-
-# noinspection PyPackageRequirements
-from telegram import Chat as TgChat
 
 RT = TypeVar('RT')
 
@@ -51,15 +48,6 @@ class Utils:
     @staticmethod
     def datetime_to_unix_time(dt):
         return int(Utils.dt_timestamp(dt) * 1000)
-
-    @staticmethod
-    def load_chat_list_from_env(env_name: str):
-        l_list = []
-        env_val = os.environ.get(env_name).replace('\'', '"')
-        l_list_ = json.loads(env_val)
-        for item in l_list_:
-            l_list.append(TgChat(item[0], item[1], item[2]))
-        return l_list
 
     @staticmethod
     def get_default_list_display(self, list_prev=None, list_last=None):
@@ -145,6 +133,23 @@ class Utils:
 
         return text_storage
 
+    @staticmethod
+    def get_calling_function_filename(called_function, pass_cnt=1):
+        sts = inspect.stack(0)
+        i = 0
+        for st in sts:
+            i += 1
+            if st.function == called_function:
+                break
+        i = i + (pass_cnt - 1)
+        calling_function_filename = None
+        if i > 0:
+            try:
+                calling_function_filename = sts[i].filename
+            except IndexError:
+                pass
+        return calling_function_filename
+
 
 class ExtList(list):
     def __init__(self, no_double=False):
@@ -181,15 +186,15 @@ class BotLogger(logging.Logger):
             sh.setFormatter(formatter)
             instance.addHandler(sh)
 
-            trace_requests = Utils.get_environ_bool('TTG_BOT_TRACE_REQUESTS') or Utils.get_environ_bool('TT_BOT_TRACE_REQUESTS') or False
-            logging_level = os.environ.get('TTG_BOT_LOGGING_LEVEL') or os.environ.get('TT_BOT_LOGGING_LEVEL') or 'INFO'
+            cls.trace_requests = Utils.get_environ_bool('TTG_BOT_TRACE_REQUESTS') or Utils.get_environ_bool('TT_BOT_TRACE_REQUESTS') or False
+            cls.logging_level = os.environ.get('TTG_BOT_LOGGING_LEVEL') or os.environ.get('TT_BOT_LOGGING_LEVEL') or 'INFO'
             # noinspection PyProtectedMember,PyUnresolvedReferences
-            logging_level = logging._nameToLevel.get(logging_level)
-            if logging_level is None:
-                instance.setLevel(logging.DEBUG if trace_requests else logging.INFO)
+            cls.logging_level = logging._nameToLevel.get(cls.logging_level)
+            if cls.logging_level is None:
+                instance.setLevel(logging.DEBUG if cls.trace_requests else logging.INFO)
             else:
-                instance.setLevel(logging_level)
-
+                instance.setLevel(cls.logging_level)
+            instance.trace_requests = cls.trace_requests
         return instance
 
     @classmethod
