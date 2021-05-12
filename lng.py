@@ -29,6 +29,7 @@ def get_lang():
             calling_function_filename = Utils.get_calling_function_filename(get_lang.__name__, 2)
             if calling_function_filename:
                 return gettext.translation('django', os.path.join(os.path.dirname(os.path.abspath(calling_function_filename)), 'locale'), languages=['ru'])
+            # noinspection PyUnresolvedReferences
             return gettext.translation('django', os.path.join(BASE_DIR, 'locale'), languages=['ru'])
 
 
@@ -46,4 +47,5 @@ def translation_activate(language):
             if calling_function_filename:
                 LANG = gettext.translation('django', os.path.join(os.path.dirname(os.path.abspath(calling_function_filename)), 'locale'), languages=[language])
             else:
+                # noinspection PyUnresolvedReferences
                 LANG = gettext.translation('django', os.path.join(BASE_DIR, 'locale'), languages=[language])

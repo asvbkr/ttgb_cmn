@@ -35,8 +35,6 @@ def log_dec(
 
 
 class Utils:
-    BOT_D_REPEAT_PLS = 'Пожалуйста, введите корректное значение'
-
     @staticmethod
     def dt_timestamp(dt):
         return time.mktime(dt.timetuple())
@@ -149,6 +147,43 @@ class Utils:
             except IndexError:
                 pass
         return calling_function_filename
+
+    @staticmethod
+    def is_call_from_child() -> bool:
+        sts = inspect.stack(0)
+        try:
+            return sts[1].function == sts[2].function
+        except IndexError:
+            pass
+
+    @staticmethod
+    def get_cur_func_name() -> str:
+        sts = inspect.stack(0)
+        try:
+            return sts[1].function
+        except IndexError:
+            pass
+
+    @staticmethod
+    def get_environ_languages_dict(np, default=None) -> dict:
+        res = {}
+        default = default or {'ru': 'Русский', 'en': 'English'}
+        l_fe = os.environ.get(np)
+        if l_fe:
+            l_l = l_fe.split(':')
+            for l_c in l_l:
+                l_r = l_c.split('=')
+                if len(l_r) == 2:
+                    res[l_r[0]] = l_r[1]
+        if not res:
+            res = default
+        return res
+
+    @staticmethod
+    def update_dict(args: dict, arg_ext: dict) -> dict:
+        if arg_ext:
+            args.update(arg_ext)
+        return args
 
 
 class ExtList(list):
