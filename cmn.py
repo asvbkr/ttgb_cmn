@@ -186,20 +186,20 @@ class Utils:
         return args
 
     @staticmethod
-    def scheduler_run(func: callable, cron_str: str, sl_time=15):
+    def scheduler_run(func: callable, cron_str: str, sl_time=15, *args, **kwargs):
         if func is None:
             return
         lgz = BotLogger.get_instance()
-        lgz.debug(f'scheduler {func.__name__} cron string - {cron_str}')
+        lgz.debug(f'scheduler {func.__name__} cron string - {cron_str}, args={args}, kwargs={kwargs}')
         itr = croniter(cron_str, datetime.now().astimezone())
         itr.get_next(datetime)
-        lgz.debug(f'scheduler {func.__name__} next run - {itr.get_current(datetime)} ({cron_str})')
+        lgz.debug(f'scheduler {func.__name__} next run - {itr.get_current(datetime)} ({cron_str}), args={args}, kwargs={kwargs}')
         while True:
             try:
                 if datetime.now().astimezone() >= itr.get_current(datetime):
                     dtn = itr.get_next(datetime)
-                    func()
-                    lgz.debug(f'scheduler {func.__name__} next run - {dtn} ({cron_str})')
+                    func(*args, **kwargs)
+                    lgz.debug(f'scheduler {func.__name__} next run - {dtn} ({cron_str}), args={args}, kwargs={kwargs}')
             except Exception as e:
                 lgz.exception(f'Exception:{e}')
             finally:
