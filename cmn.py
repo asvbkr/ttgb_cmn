@@ -185,6 +185,8 @@ class Utils:
             args.update(arg_ext)
         return args
 
+    STOP_ALL_RUNNING_SCHEDULERS = False
+
     @staticmethod
     def scheduler_run(func: callable, cron_str: str, sl_time=15, *args, **kwargs):
         if func is None:
@@ -194,7 +196,7 @@ class Utils:
         itr = croniter(cron_str, datetime.now().astimezone())
         itr.get_next(datetime)
         lgz.debug(f'scheduler {func.__name__} next run - {itr.get_current(datetime)} ({cron_str}), args={args}, kwargs={kwargs}')
-        while True:
+        while not Utils.STOP_ALL_RUNNING_SCHEDULERS:
             try:
                 if datetime.now().astimezone() >= itr.get_current(datetime):
                     dtn = itr.get_next(datetime)
@@ -257,3 +259,32 @@ class BotLogger(logging.Logger):
         if not cls.__instance:
             cls.__instance = BotLogger()
         return cls.__instance
+
+
+class Scheduler:
+    lgz = BotLogger.get_instance()
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._running = True
+
+    def terminate(self):
+        self._running = False
+
+    def run(self, func: callable, cron_str: str, sl_time=15, *args, **kwargs):
+        if func is None:
+            return
+        self.lgz.debug(f'scheduler {func.__name__} cron string - {cron_str}, args={args}, kwargs={kwargs}')
+        itr = croniter(cron_str, datetime.now().astimezone())
+        itr.get_next(datetime)
+        self.lgz.debug(f'scheduler {func.__name__} next run - {itr.get_current(datetime)} ({cron_str}), args={args}, kwargs={kwargs}')
+        while self._running:
+            try:
+                if datetime.now().astimezone() >= itr.get_current(datetime):
+                    dtn = itr.get_next(datetime)
+                    func(*args, **kwargs)
+                    self.lgz.debug(f'scheduler {func.__name__} next run - {dtn} ({cron_str}), args={args}, kwargs={kwargs}')
+            except Exception as e:
+                self.lgz.exception(f'Exception:{e}')
+            finally:
+                time.sleep(sl_time)
