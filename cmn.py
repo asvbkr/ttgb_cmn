@@ -264,20 +264,34 @@ class BotLogger(logging.Logger):
 class Scheduler:
     lgz = BotLogger.get_instance()
 
-    def __init__(self) -> None:
+    def __init__(self, sl_time=15, fr_level=1) -> None:
         super().__init__()
         self._running = True
+
+        # Частота срабатывания таймера в процессе, сек.
+        self.sl_time = sl_time
+        # Порог срабатывания таймера при старте — % времени прошедшего от прошлого запуска к общей длительности итерации
+        self.fr_level = fr_level
 
     def terminate(self):
         self._running = False
 
-    def run(self, func: callable, cron_str: str, sl_time=15, *args, **kwargs):
+    def run(self, func: callable, cron_str: str, *args, **kwargs):
         if func is None:
             return
         self.lgz.debug(f'scheduler {func.__name__} cron string - {cron_str}, args={args}, kwargs={kwargs}')
         itr = croniter(cron_str, datetime.now().astimezone())
+        itr_p = croniter(cron_str, datetime.now().astimezone())
+        itr_p.get_prev(datetime)
+        dt_prev = itr_p.get_current(datetime)
+        dt_cur = itr.get_current(datetime)
         itr.get_next(datetime)
-        self.lgz.debug(f'scheduler {func.__name__} next run - {itr.get_current(datetime)} ({cron_str}), args={args}, kwargs={kwargs}')
+        dt_next = itr.get_current(datetime)
+        pr_prev = 100 * ((dt_cur - dt_prev) / (dt_next - dt_prev))
+        if pr_prev <= self.fr_level:
+            self.lgz.debug(f'scheduler {func.__name__} {pr_prev:.4f}% from previous running: next run modify to {itr.get_current(datetime)}. First run level: {self.fr_level:.4f} %')
+            itr.get_prev(datetime)
+        self.lgz.debug(f'scheduler {func.__name__} next run - {itr.get_current(datetime)} ({cron_str}), args={args}, kwargs={kwargs} [{pr_prev:.4f} %]')
         while self._running:
             try:
                 if datetime.now().astimezone() >= itr.get_current(datetime):
@@ -287,4 +301,4 @@ class Scheduler:
             except Exception as e:
                 self.lgz.exception(f'Exception:{e}')
             finally:
-                time.sleep(sl_time)
+                time.sleep(self.sl_time)
