@@ -80,6 +80,17 @@ class Utils:
         return value
 
     @staticmethod
+    def str_to_float(string, default=None):
+        value = default
+        try:
+            value = float(string.strip().replace(',', '.').replace(' ', '').replace(' ', ''))
+        except TypeError:
+            pass
+        except ValueError:
+            pass
+        return value
+
+    @staticmethod
     def get_environ_int(np, default=None):
         # type: (str, int) -> int
         s = os.environ.get(np)
@@ -227,6 +238,7 @@ class ExtList(list):
 class BotLogger(logging.Logger):
     __instance = None
 
+    # noinspection PyProtectedMember,PyUnresolvedReferences
     def __new__(cls, **kwargs):
         instance = None
         if not cls.__instance:
@@ -245,7 +257,6 @@ class BotLogger(logging.Logger):
 
             cls.trace_requests = Utils.get_environ_bool('TTG_BOT_TRACE_REQUESTS') or Utils.get_environ_bool('TT_BOT_TRACE_REQUESTS') or False
             cls.logging_level = os.environ.get('TTG_BOT_LOGGING_LEVEL') or os.environ.get('TT_BOT_LOGGING_LEVEL') or 'INFO'
-            # noinspection PyProtectedMember,PyUnresolvedReferences
             cls.logging_level = logging._nameToLevel.get(cls.logging_level)
             if cls.logging_level is None:
                 instance.setLevel(logging.DEBUG if cls.trace_requests else logging.INFO)
