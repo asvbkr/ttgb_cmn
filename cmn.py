@@ -116,6 +116,17 @@ class Utils:
         return res
 
     @staticmethod
+    def str_add(primary_string, added_string, delimiter='; '):
+        if not isinstance(primary_string, str):
+            primary_string = str(primary_string)
+        if not isinstance(added_string, str):
+            added_string = str(added_string)
+        res = primary_string
+        if added_string and len(added_string) != 0:
+            res += ('' if not res else delimiter) + added_string
+        return res
+
+    @staticmethod
     def get_md5_hash_str(str_):
         # type: (str) -> str
         return hashlib.md5(str(str_).encode('utf-8')).hexdigest()
