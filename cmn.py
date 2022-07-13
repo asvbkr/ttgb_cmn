@@ -7,7 +7,7 @@ import math
 import os
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, date
 from logging.handlers import RotatingFileHandler
 from croniter import croniter
 from typing import TypeVar, Callable
@@ -206,6 +206,27 @@ class Utils:
         if arg_ext:
             args.update(arg_ext)
         return args
+
+    @staticmethod
+    def dt_str_normalize(date_str: str):
+        return (date_str or '').replace(',', '.').replace('/', '.')
+
+    @classmethod
+    def get_datetime_by_str(cls, date_str: str, fmt_date_usr="%d.%m.%Y", fmt_date_usr_short="%d.%m.%y") -> datetime:
+        date_str = cls.dt_str_normalize(date_str)
+        try:
+            return datetime.strptime(date_str, fmt_date_usr).astimezone()
+        except (TypeError, ValueError):
+            try:
+                return datetime.strptime(date_str, fmt_date_usr_short).astimezone()
+            except (TypeError, ValueError):
+                pass
+
+    @classmethod
+    def get_date_by_str(cls, date_str: str, fmt_date_usr="%d.%m.%Y", fmt_date_usr_short="%d.%m.%y") -> date:
+        dt = cls.get_datetime_by_str(date_str, fmt_date_usr=fmt_date_usr, fmt_date_usr_short=fmt_date_usr_short)
+        if dt:
+            return dt.date()
 
     STOP_ALL_RUNNING_SCHEDULERS = False
 
