@@ -274,12 +274,13 @@ class BotLogger(logging.Logger):
     def __new__(cls, **kwargs):
         instance = None
         if not cls.__instance:
-            instance = logging.getLogger(os.environ.get('TTG_BOT_LOGGING_NAME')) or logging.getLogger(os.environ.get('TT_BOT_LOGGING_NAME')) or 'TtgBot'
+            instance_name = os.environ.get('TTG_BOT_LOGGING_NAME') or os.environ.get('TT_BOT_LOGGING_NAME') or 'TtgBot'
+            instance = logging.getLogger(instance_name)
             formatter = logging.Formatter('%(asctime)s - %(name)s[%(threadName)s-%(thread)d] - %(levelname)s - %(module)s.%(funcName)s:%(lineno)d - %(message)s')
 
             log_file_max_bytes = Utils.get_environ_int('TTG_BOT_LOGGING_FILE_MAX_BYTES') or Utils.get_environ_int('TT_BOT_LOGGING_FILE_MAX_BYTES') or 10485760
             log_file_backup_count = Utils.get_environ_int('TTG_BOT_LOGGING_FILE_BACKUP_COUNT') or Utils.get_environ_int('TT_BOT_LOGGING_FILE_BACKUP_COUNT') or 10
-            fh = RotatingFileHandler("bots_TtgBot.log", mode='a', maxBytes=log_file_max_bytes, backupCount=log_file_backup_count, encoding='UTF-8')
+            fh = RotatingFileHandler(f"bots_{instance_name}.log", mode='a', maxBytes=log_file_max_bytes, backupCount=log_file_backup_count, encoding='UTF-8')
             fh.setFormatter(formatter)
             instance.addHandler(fh)
 
