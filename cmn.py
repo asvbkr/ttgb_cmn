@@ -295,7 +295,8 @@ class Utils:
         lgz.debug(f'scheduler {func.__name__} cron string - {cron_str}, args={args}, kwargs={kwargs}')
         itr = croniter(cron_str, datetime.now().astimezone())
         itr.get_next(datetime)
-        lgz.debug(f'scheduler {func.__name__} next run - {itr.get_current(datetime)} ({cron_str}), args={args}, kwargs={kwargs}')
+        lgz.debug(
+            f'scheduler {func.__name__} next run - {itr.get_current(datetime)} ({cron_str}), args={args}, kwargs={kwargs}')
         while not Utils.STOP_ALL_RUNNING_SCHEDULERS:
             try:
                 if datetime.now().astimezone() >= itr.get_current(datetime):
@@ -317,6 +318,14 @@ class ExtList(list):
         if not self.no_double or not (obj in self):
             super(ExtList, self).append(obj)
 
+    def extend(self, list_add):
+        if self.no_double:
+            set_main = set(self)
+            set_add = set(list_add)
+            set_add_nd = set_add - set_main
+            list_add = list(set_add_nd)
+        super(ExtList, self).extend(list_add)
+
     def get(self, index):
         try:
             return self[index]
@@ -333,11 +342,15 @@ class BotLogger(logging.Logger):
         if not cls.__instance:
             instance_name = os.environ.get('TTG_BOT_LOGGING_NAME') or os.environ.get('TT_BOT_LOGGING_NAME') or 'TtgBot'
             instance = logging.getLogger(instance_name)
-            formatter = logging.Formatter('%(asctime)s - %(name)s[%(threadName)s-%(thread)d] - %(levelname)s - %(module)s.%(funcName)s:%(lineno)d - %(message)s')
+            formatter = logging.Formatter(
+                '%(asctime)s - %(name)s[%(threadName)s-%(thread)d] - %(levelname)s - %(module)s.%(funcName)s:%(lineno)d - %(message)s')
 
-            log_file_max_bytes = Utils.get_environ_int('TTG_BOT_LOGGING_FILE_MAX_BYTES') or Utils.get_environ_int('TT_BOT_LOGGING_FILE_MAX_BYTES') or 10485760
-            log_file_backup_count = Utils.get_environ_int('TTG_BOT_LOGGING_FILE_BACKUP_COUNT') or Utils.get_environ_int('TT_BOT_LOGGING_FILE_BACKUP_COUNT') or 10
-            fh = RotatingFileHandler(f"bots_{instance_name}.log", mode='a', maxBytes=log_file_max_bytes, backupCount=log_file_backup_count, encoding='UTF-8')
+            log_file_max_bytes = Utils.get_environ_int('TTG_BOT_LOGGING_FILE_MAX_BYTES') or Utils.get_environ_int(
+                'TT_BOT_LOGGING_FILE_MAX_BYTES') or 10485760
+            log_file_backup_count = Utils.get_environ_int('TTG_BOT_LOGGING_FILE_BACKUP_COUNT') or Utils.get_environ_int(
+                'TT_BOT_LOGGING_FILE_BACKUP_COUNT') or 10
+            fh = RotatingFileHandler(f"bots_{instance_name}.log", mode='a', maxBytes=log_file_max_bytes,
+                                     backupCount=log_file_backup_count, encoding='UTF-8')
             fh.setFormatter(formatter)
             instance.addHandler(fh)
 
@@ -345,8 +358,10 @@ class BotLogger(logging.Logger):
             sh.setFormatter(formatter)
             instance.addHandler(sh)
 
-            cls.trace_requests = Utils.get_environ_bool('TTG_BOT_TRACE_REQUESTS') or Utils.get_environ_bool('TT_BOT_TRACE_REQUESTS') or False
-            cls.logging_level = os.environ.get('TTG_BOT_LOGGING_LEVEL') or os.environ.get('TT_BOT_LOGGING_LEVEL') or 'INFO'
+            cls.trace_requests = Utils.get_environ_bool('TTG_BOT_TRACE_REQUESTS') or Utils.get_environ_bool(
+                'TT_BOT_TRACE_REQUESTS') or False
+            cls.logging_level = os.environ.get('TTG_BOT_LOGGING_LEVEL') or os.environ.get(
+                'TT_BOT_LOGGING_LEVEL') or 'INFO'
             cls.logging_level = logging._nameToLevel.get(cls.logging_level)
             if cls.logging_level is None:
                 instance.setLevel(logging.DEBUG if cls.trace_requests else logging.INFO)
@@ -390,15 +405,18 @@ class Scheduler:
         dt_next = itr.get_current(datetime)
         pr_prev = 100 * ((dt_cur - dt_prev) / (dt_next - dt_prev))
         if pr_prev <= self.fr_level:
-            self.lgz.debug(f'scheduler {func.__name__} {pr_prev:.4f}% from previous running: next run modify to {itr.get_current(datetime)}. First run level: {self.fr_level:.4f} %')
+            self.lgz.debug(
+                f'scheduler {func.__name__} {pr_prev:.4f}% from previous running: next run modify to {itr.get_current(datetime)}. First run level: {self.fr_level:.4f} %')
             itr.get_prev(datetime)
-        self.lgz.debug(f'scheduler {func.__name__} next run - {itr.get_current(datetime)} ({cron_str}), args={args}, kwargs={kwargs} [{pr_prev:.4f} %]')
+        self.lgz.debug(
+            f'scheduler {func.__name__} next run - {itr.get_current(datetime)} ({cron_str}), args={args}, kwargs={kwargs} [{pr_prev:.4f} %]')
         while self._running:
             try:
                 if datetime.now().astimezone() >= itr.get_current(datetime):
                     dtn = itr.get_next(datetime)
                     func(*args, **kwargs)
-                    self.lgz.debug(f'scheduler {func.__name__} next run - {dtn} ({cron_str}), args={args}, kwargs={kwargs}')
+                    self.lgz.debug(
+                        f'scheduler {func.__name__} next run - {dtn} ({cron_str}), args={args}, kwargs={kwargs}')
             except Exception as e:
                 self.lgz.exception(f'Exception:{e}')
             finally:
