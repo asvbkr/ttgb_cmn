@@ -63,11 +63,13 @@ class _HTMLToText(HTMLParser):
         if text and not self.hide_output:
             self._buf.append(re.sub(r'\s+', ' ', text))
 
+    # noinspection SpellCheckingInspection
     def handle_entityref(self, name):
         if name in name2codepoint and not self.hide_output:
             c = chr(name2codepoint[name])
             self._buf.append(c)
 
+    # noinspection SpellCheckingInspection
     def handle_charref(self, name):
         if not self.hide_output:
             n = int(name[1:], 16) if name.startswith('x') else int(name)
@@ -340,14 +342,15 @@ class BotLogger(logging.Logger):
     def __new__(cls, **kwargs):
         instance = None
         if not cls.__instance:
-            instance_name = os.environ.get('TTG_BOT_LOGGING_NAME') or os.environ.get('TT_BOT_LOGGING_NAME') or 'TtgBot'
+            instance_name = os.environ.get('MXR_BOT_LOGGING_NAME') or os.environ.get('TTG_BOT_LOGGING_NAME') or os.environ.get('TT_BOT_LOGGING_NAME') or 'TtgBot'
             instance = logging.getLogger(instance_name)
+            # noinspection SpellCheckingInspection
             formatter = logging.Formatter(
                 '%(asctime)s - %(name)s[%(threadName)s-%(thread)d] - %(levelname)s - %(module)s.%(funcName)s:%(lineno)d - %(message)s')
 
-            log_file_max_bytes = Utils.get_environ_int('TTG_BOT_LOGGING_FILE_MAX_BYTES') or Utils.get_environ_int(
+            log_file_max_bytes = Utils.get_environ_int('MXR_BOT_LOGGING_FILE_MAX_BYTES') or Utils.get_environ_int('TTG_BOT_LOGGING_FILE_MAX_BYTES') or Utils.get_environ_int(
                 'TT_BOT_LOGGING_FILE_MAX_BYTES') or 10485760
-            log_file_backup_count = Utils.get_environ_int('TTG_BOT_LOGGING_FILE_BACKUP_COUNT') or Utils.get_environ_int(
+            log_file_backup_count = Utils.get_environ_int('MXR_BOT_LOGGING_FILE_BACKUP_COUNT') or Utils.get_environ_int('TTG_BOT_LOGGING_FILE_BACKUP_COUNT') or Utils.get_environ_int(
                 'TT_BOT_LOGGING_FILE_BACKUP_COUNT') or 10
             fh = RotatingFileHandler(f"bots_{instance_name}.log", mode='a', maxBytes=log_file_max_bytes,
                                      backupCount=log_file_backup_count, encoding='UTF-8')
@@ -358,9 +361,9 @@ class BotLogger(logging.Logger):
             sh.setFormatter(formatter)
             instance.addHandler(sh)
 
-            cls.trace_requests = Utils.get_environ_bool('TTG_BOT_TRACE_REQUESTS') or Utils.get_environ_bool(
+            cls.trace_requests = Utils.get_environ_bool('MXR_BOT_TRACE_REQUESTS') or Utils.get_environ_bool('TTG_BOT_TRACE_REQUESTS') or Utils.get_environ_bool(
                 'TT_BOT_TRACE_REQUESTS') or False
-            cls.logging_level = os.environ.get('TTG_BOT_LOGGING_LEVEL') or os.environ.get(
+            cls.logging_level = os.environ.get('MXR_BOT_LOGGING_LEVEL') or os.environ.get('TTG_BOT_LOGGING_LEVEL') or os.environ.get(
                 'TT_BOT_LOGGING_LEVEL') or 'INFO'
             cls.logging_level = logging._nameToLevel.get(cls.logging_level)
             if cls.logging_level is None:
